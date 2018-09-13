@@ -17,6 +17,7 @@ procedure cyclic_wd is
 	Start_Wait: Time;
 	c: Integer := 0;         
 	d: Duration := 1.0;
+	x: Integer := 0;
 	Start_Time: Time := Clock;
         G: Generator;
 	
@@ -38,19 +39,20 @@ procedure cyclic_wd is
 	procedure f3 is 
 		Message: constant String := "f3 executing, time is now";
 	begin
-		delay Duration(Random(G));
+		--delay Duration(Random(G));
+		delay 1.0;
 
 		Put(Message);
 		Put_Line(Duration'Image(Clock - Start_Time));
 		
-		Reset(G); 
+		--Reset(G); 
 		-- add a random delay here
 	end f3;
 	
 	task Watchdog is
 	       -- add your task entries for communication
 		entry start;
-		entry stop;		   	
+		entry stop(Start_wait: in Time);		   	
 	end Watchdog;
 
 	task body Watchdog is
@@ -58,18 +60,19 @@ procedure cyclic_wd is
 		loop
                  -- add your task code inside this loop 
 			accept start do
-				put_line("Start!");
+				x := x + 1;
 			end start;
 
 			select			
-				accept stop do
-					put_line("No delay!");
+				accept stop(Start_wait: in Time) do
+					--put_line("No delay!");
+					delay until Start_Wait + d;
 				end stop;
 			or
-				delay 0.1;
+				delay 0.5;
 				put_line("f3 has too long delay!");
-				accept stop do
-					put_line("Received stop too late!");
+				accept stop(Start_wait: in Time) do
+					delay until Start_wait + 2.0;
 				end stop;
 			end select;
 			
@@ -83,16 +86,22 @@ procedure cyclic_wd is
               	Start_Wait := Clock;					
 		f1;
                 f2;
-		if (c mod 2 = 0) then			
-			delay until Start_Wait + 0.5;
-			Watchdog.start;
+		delay until Start_Wait + 0.5;
+		Watchdog.start;
+		if (c mod 2 = 0) then	
+			
 			put_line("1");
                 	f3;	
 			put_line("3");		
-			Watchdog.stop;
-			put_line("4");	  
+			
+			--put_line("4");	  
 		end if;
+		--S := Seconds;
+
+
+		Watchdog.stop(Start_wait);
+		
 		c := c+1;
-		delay until Start_Wait + d;       
+		--delay until Start_Wait + d;       
         end loop;
 end cyclic_wd;
