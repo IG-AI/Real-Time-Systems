@@ -10,21 +10,20 @@ procedure comm1 is
     Message: constant String := "Process communication";
 	task buffer is
             -- add your task entries for communication 
-		entry get;
+		entry get(x: out Integer);
 		entry set(x: in Integer);
 		entry quit;
 	end buffer;
 
 	task producer is
             -- add your task entries for communication 
-		entry ready;
+		--entry ready;
 		entry quit;
 	end producer;
 
 	task consumer is
             -- add your task entries for communication 
-		entry ready;
-		entry receive(x: in Integer);
+		--entry ready;
 	end consumer;
 
 
@@ -32,41 +31,44 @@ procedure comm1 is
 		Message: constant String := "buffer executing";
                 -- change/add your local declarations here 
 		b_array: array(1 .. 10) of Integer;
-		index: Integer := 0;  
+		index: Integer := 0; 
+		exit_flag: Boolean := False;
 		    
 	begin
 		Put_Line(Message);
 		loop  -- add your task code inside this loop
-			put_line("Begin loop"); 
-			if (index /= 10) then
-				put_line("sending prooducer.ready");
-				producer.ready;
-				put_line("sent prooducer.ready");
-			end if;	
-			if (index /= 0) then
-				--consumer.ready;
-				NULL;
-			end if;	   		
+			put_line("index: " & Integer'image(index));
+			if (exit_flag) then
+				put_line("Ending buffer");
+				
+				exit;
+			end if;
+			--if (index < 2) then
+			--	producer.ready;
+			--end if;	
+			--if (index /= 0) then
+			--	consumer.ready;				
+			--end if;	   		
 
 			select
-				accept set(x: in Integer) do
-					index := index + 1;
-					put_line(Integer'Image(index));
-					b_array(index) := x;
-					put_line(Integer'Image(index));			
-				end set;
+				when (index < 10) =>
+					accept set(x: in Integer) do
+						index := index + 1;
+						b_array(index) := x;			
+					end set;
 			or
-				accept get do				
-					consumer.receive(b_array(index));
-					index := index -1;
-					put_line(Integer'Image(index));
-				end get;
+				when (index > 0) =>
+					accept get(x: out Integer) do			
+						x := b_array(index);
+						index := index -1;
+					end get;
 			or
 				accept quit do
-					NULL;
-				end quit;
-			or
-				
+					exit_flag := True;
+					--accept set(x: in Integer) do
+					--	NULL;			
+					--end set;
+				end quit;				
 			end select;
 		end loop;
 	end buffer;
@@ -80,27 +82,29 @@ procedure comm1 is
    		use rand_value;
 		G: Generator;
 		value: Integer;
+		exit_flag: Boolean := False;
 	begin
 		Put_Line(Message);
 		loop -- add your task code inside this loop  
-			select
-				accept ready do
-					value := Random(G);
-					put_line(Integer'Image(value));
-					buffer.set(value);
-					put_line("hej");
-					Reset(G);
-				end ready;
-			or
+			if (exit_flag) then
+				put_line("Ending Producer");
+				exit;
+			end if;			
+
+			select 
 				accept quit do
-					NULL;
+					put_line("here");
+					exit_flag := True;
 				end quit;
+			or
+				delay 0.05;
 			end select;
+			value := Random(G);
+			put_line("Value sent to buffer from P: " & Integer'Image(value));
+			buffer.set(value);
+			Reset(G);
 		 
-			
-
-
-         	end loop;
+		end loop;
 	end producer;
 
 
@@ -108,26 +112,37 @@ procedure comm1 is
 		Message: constant String := "consumer executing";
                 -- change/add your local declarations here
 		value: Integer := 0;
+		x: Integer;
 	begin
 		Put_Line(Message);
 		Main_Cycle:
 		loop     -- add your task code inside this loop 
-			accept ready do 
-				buffer.get;
-				accept receive(x: in Integer) do
-					put_line(Integer'Image(x));
-					value := value + x;
-				end receive;
-			end ready;
+			--accept ready do 
+			--	NULL;
+			--end ready;
+
+			buffer.get(x);
+			--accept receive(x: in Integer) do
+			put_line("Value recived from buffer to C: " & Integer'Image(x));			
+			value := value + x;
+			put_line("Count: " & Integer'Image(Value));
+			--end receive;
 			
+			--delay 1.0;			
+
 			if (value >= 100) then
 				exit;
 			end if;
 		end loop Main_Cycle; 
 
                 -- add your code to stop executions of other tasks
-		buffer.quit;
-		producer.quit;     
+		put_line("Ending Consumer");
+		producer.quit;  
+		put_line("sent mess 1");  
+		buffer.quit; 
+		
+		--producer.quit;  
+		put_line("sent mess 2");
 		exception
 			  when TASKING_ERROR =>
 				  Put_Line("Buffer finished before producer");
