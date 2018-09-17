@@ -17,7 +17,6 @@ procedure cyclic_wd is
 	Start_Wait: Time;
 	c: Integer := 0;         
 	d: Duration := 1.0;
-	x: Integer := 0;
 	Start_Time: Time := Clock;
         G: Generator;
 	
@@ -39,13 +38,12 @@ procedure cyclic_wd is
 	procedure f3 is 
 		Message: constant String := "f3 executing, time is now";
 	begin
-		--delay Duration(Random(G));
-		delay 1.0;
+		delay Duration(Random(G));
 
 		Put(Message);
 		Put_Line(Duration'Image(Clock - Start_Time));
 		
-		--Reset(G); 
+		Reset(G); 
 		-- add a random delay here
 	end f3;
 	
@@ -60,7 +58,7 @@ procedure cyclic_wd is
 		loop
                  -- add your task code inside this loop 
 			accept start do
-				x := x + 1;
+				NULL;
 			end start;
 
 			select			
@@ -89,19 +87,11 @@ procedure cyclic_wd is
 		delay until Start_Wait + 0.5;
 		Watchdog.start;
 		if (c mod 2 = 0) then	
-			
-			put_line("1");
-                	f3;	
-			put_line("3");		
-			
-			--put_line("4");	  
+                	f3;	  
 		end if;
-		--S := Seconds;
-
 
 		Watchdog.stop(Start_wait);
 		
-		c := c+1;
-		--delay until Start_Wait + d;       
+		c := c+1;      
         end loop;
 end cyclic_wd;
