@@ -13,19 +13,18 @@ procedure comm1 is
 	task buffer is
             -- add your task entries for communication 
 		entry get(x: out Integer);
-		entry set(x: in Integer);
+		entry set(x: in Integer; y: out Integer);
 		entry quit;
 	end buffer;
 
 	task producer is
             -- add your task entries for communication 
-		--entry ready;
+		entry update(x: in Integer);
 		entry quit;
 	end producer;
 
 	task consumer is
             -- add your task entries for communication 
-		--entry ready;
 	end consumer;
 
 
@@ -39,26 +38,21 @@ procedure comm1 is
 	begin
 		Put_Line(Message);
 		loop  -- add your task code inside this loop
-			put_line("index: " & Integer'image(index));
+			-- Exit the task when the exit_flag is True			
 			if (exit_flag) then
-				put_line("Ending buffer");
-				
 				exit;
-			end if;
-			--if (index < 2) then
-			--	producer.ready;
-			--end if;	
-			--if (index /= 0) then
-			--	consumer.ready;				
-			--end if;	   		
+			end if;	   		
 
 			select
+				-- Set the the x value at the end of the buffer array 
 				when (index < 10) =>
-					accept set(x: in Integer) do
+					accept set(x: in Integer; y: out Integer) do
 						index := index + 1;
-						b_array(index) := x;			
+						b_array(index) := x;
+						y := index;		
 					end set;
 			or
+				-- Retrieves the first value in the buffer array and removes it from the buffer
 				when (index > 0) =>
 					accept get(x: out Integer) do			
 						x := b_array(1);
@@ -68,13 +62,11 @@ procedure comm1 is
 
 						end loop For_Loop;
 						index := index - 1;
+						producer.update(index);
 					end get;
 			or
 				accept quit do
 					exit_flag := True;
-					--accept set(x: in Integer) do
-					--	NULL;			
-					--end set;
 				end quit;				
 			end select;
 		end loop;
@@ -84,32 +76,40 @@ procedure comm1 is
 	task body producer is 
 		Message: constant String := "producer executing";
                 -- change/add your local declarations here
+		-- Setting up the random generator between 0 - 25
 		subtype rand_range is Integer range 0 .. 25;
    		package rand_value is new Ada.Numerics.Discrete_Random (rand_range);
    		use rand_value;
 		G: Generator;
 		value: Integer;
 		exit_flag: Boolean := False;
+		counter: Integer := 0;
 	begin
 		Put_Line(Message);
-		loop -- add your task code inside this loop  
+		loop -- add your task code inside this loop
+			--Exit the task when the exit_flag is True  
 			if (exit_flag) then
-				put_line("Ending Producer");
 				exit;
 			end if;			
 
 			select 
 				accept quit do
-					put_line("here");
 					exit_flag := True;
 				end quit;
 			or
+				-- Update the counter that counts the number of taken slots in the buffer
+				accept update(x: in Integer) do
+					counter := x;
+				end update;
+			or
 				delay 0.05;
 			end select;
-			value := Random(G);
-			put_line("Value sent to buffer from P: " & Integer'Image(value));
-			buffer.set(value);
-			Reset(G);
+			if (counter < 10) then
+				value := Random(G);
+				put_line("Value sent to buffer from P: " & Integer'Image(value));
+				buffer.set(value, counter);
+				Reset(G);
+			end if;
 		 
 		end loop;
 	end producer;
@@ -118,6 +118,7 @@ procedure comm1 is
 	task body consumer is 
 		Message: constant String := "consumer executing";
                 -- change/add your local declarations here
+		-- Setting up the random generator between 0 - 1
 		subtype rand_range is Integer range 0 .. 1;
    		package rand_value is new Ada.Numerics.Discrete_Random (rand_range);
    		use rand_value;
@@ -128,16 +129,9 @@ procedure comm1 is
 		Put_Line(Message);
 		Main_Cycle:
 		loop     -- add your task code inside this loop 
-			--accept ready do 
-			--	NULL;
-			--end ready;
-
 			buffer.get(x);
-			--accept receive(x: in Integer) do
 			put_line("Value recived from buffer to C: " & Integer'Image(x));			
 			value := value + x;
-			put_line("Count: " & Integer'Image(Value));
-			--end receive;
 			
 			delay Duration(Random(G));
 			Reset(G); 			
@@ -148,13 +142,8 @@ procedure comm1 is
 		end loop Main_Cycle; 
 
                 -- add your code to stop executions of other tasks
-		put_line("Ending Consumer");
 		producer.quit;  
-		put_line("sent mess 1");  
 		buffer.quit; 
-		
-		--producer.quit;  
-		put_line("sent mess 2");
 		exception
 			  when TASKING_ERROR =>
 				  Put_Line("Buffer finished before producer");

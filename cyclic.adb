@@ -7,8 +7,7 @@ procedure cyclic is
     Message: constant String := "Cyclic scheduler";
         -- change/add your declarations here
 	Start_Wait: Time;
-	c: Integer := 0;        
-	d: Duration := 1.0;
+	c: Integer := 0;  
 	Start_Time: Time := Clock;
 	s: Integer := 0;
         
@@ -40,12 +39,15 @@ procedure cyclic is
 		Start_Wait := Clock;					
 		f1;
                 f2;
+
+		-- Ensures that f3 is executed every other second
 		if (c mod 2 = 0) then  
 			delay until Start_Wait + 0.5;
                 	f3;
 		end if;
 		c := c+1;
-		delay until Start_Wait + d;
+		
+		delay until Start_Wait + 1.0;
         end loop;
 end cyclic;
 

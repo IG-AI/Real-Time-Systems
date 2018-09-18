@@ -15,8 +15,7 @@ procedure cyclic_wd is
     Message: constant String := "Cyclic scheduler with watchdog";
         -- change/add your declarations here
 	Start_Wait: Time;
-	c: Integer := 0;         
-	d: Duration := 1.0;
+	c: Integer := 0;   
 	Start_Time: Time := Clock;
         G: Generator;
 	
@@ -38,13 +37,12 @@ procedure cyclic_wd is
 	procedure f3 is 
 		Message: constant String := "f3 executing, time is now";
 	begin
-		delay Duration(Random(G));
-
-		Put(Message);
-		Put_Line(Duration'Image(Clock - Start_Time));
-		
-		Reset(G); 
 		-- add a random delay here
+		delay Duration(Random(G));
+		Reset(G); 
+		
+		Put(Message);
+		Put_Line(Duration'Image(Clock - Start_Time));		
 	end f3;
 	
 	task Watchdog is
@@ -54,24 +52,31 @@ procedure cyclic_wd is
 	end Watchdog;
 
 	task body Watchdog is
-		begin
+		start_flag: Boolean := False;
+	begin
 		loop
-                 -- add your task code inside this loop 
-			accept start do
-				NULL;
-			end start;
-
-			select			
-				accept stop(Start_wait: in Time) do
-					--put_line("No delay!");
-					delay until Start_Wait + d;
-				end stop;
+ 			select	
+				-- Indicates that f3 is about to start executing 
+				accept start do
+					start_flag := True; 
+				end start;
+			or	
+				-- Indicates that f3 finish executing in time 
+				when (start_flag) =>	
+					accept stop(Start_wait: in Time) do
+						start_flag := False;
+						delay until Start_Wait + 1.0;
+					end stop;
 			or
-				delay 0.5;
-				put_line("f3 has too long delay!");
-				accept stop(Start_wait: in Time) do
-					delay until Start_wait + 2.0;
-				end stop;
+				-- Indicates that f3 took longer then 0.5 seconds to execute
+				when (start_flag) =>						
+					delay 0.5;
+					start_flag := False;
+					put_line("f3 has too long delay!");
+					accept stop(Start_wait: in Time) do
+						delay until Start_wait + 2.0;
+					end stop;
+					
 			end select;
 			
 		end loop;
@@ -86,6 +91,7 @@ procedure cyclic_wd is
                 f2;
 		delay until Start_Wait + 0.5;
 		Watchdog.start;
+		-- Ensures that f3 is executed every other second
 		if (c mod 2 = 0) then	
                 	f3;	  
 		end if;
