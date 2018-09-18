@@ -3,8 +3,10 @@
 with Ada.Calendar;
 with Ada.Text_IO;
 with Ada.Numerics.Discrete_Random;
+
 use Ada.Calendar;
 use Ada.Text_IO;
+
 
 procedure comm1 is
     Message: constant String := "Process communication";
@@ -59,8 +61,13 @@ procedure comm1 is
 			or
 				when (index > 0) =>
 					accept get(x: out Integer) do			
-						x := b_array(index);
-						index := index -1;
+						x := b_array(1);
+						For_Loop:
+							for I in Integer range 1 .. 9 loop
+								b_array(I) := b_array(I + 1);
+
+						end loop For_Loop;
+						index := index - 1;
 					end get;
 			or
 				accept quit do
@@ -111,6 +118,10 @@ procedure comm1 is
 	task body consumer is 
 		Message: constant String := "consumer executing";
                 -- change/add your local declarations here
+		subtype rand_range is Integer range 0 .. 1;
+   		package rand_value is new Ada.Numerics.Discrete_Random (rand_range);
+   		use rand_value;
+		G: Generator;
 		value: Integer := 0;
 		x: Integer;
 	begin
@@ -128,7 +139,8 @@ procedure comm1 is
 			put_line("Count: " & Integer'Image(Value));
 			--end receive;
 			
-			--delay 1.0;			
+			delay Duration(Random(G));
+			Reset(G); 			
 
 			if (value >= 100) then
 				exit;
