@@ -13,10 +13,9 @@ use Ada.Numerics.Float_Random;
 
 procedure cyclic_wd is
     Message: constant String := "Cyclic scheduler with watchdog";
-        -- change/add your declarations here
-	Start_Wait: Time;
-	c: Integer := 0;   
 	Start_Time: Time := Clock;
+	Start_Wait: Time;
+	counter: Integer := 0;  	
         G: Generator;
 	
 	
@@ -36,19 +35,18 @@ procedure cyclic_wd is
 
 	procedure f3 is 
 		Message: constant String := "f3 executing, time is now";
-	begin
-		-- add a random delay here
-		delay Duration(Random(G));
-		Reset(G); 
-		
+	begin			
 		Put(Message);
-		Put_Line(Duration'Image(Clock - Start_Time));		
+		Put_Line(Duration'Image(Clock - Start_Time));
+
+		-- Random delay to make f3 occasionally have too long execution time
+		delay Duration(Random(G));
+		Reset(G); 		
 	end f3;
 	
 	task Watchdog is
-	       -- add your task entries for communication
-		entry start;
-		entry stop(Start_wait: in Time);		   	
+		entry start; -- TODO: Add comment
+		entry stop(Start_wait: in Time); -- TODO: Add comment	 	   	
 	end Watchdog;
 
 	task body Watchdog is
@@ -72,7 +70,7 @@ procedure cyclic_wd is
 				when (start_flag) =>						
 					delay 0.5;
 					start_flag := False;
-					put_line("f3 has too long delay!");
+					put_line("f3's execution time was too long!");
 					accept stop(Start_wait: in Time) do
 						delay until Start_wait + 2.0;
 					end stop;
@@ -84,20 +82,22 @@ procedure cyclic_wd is
 
 	begin
 
-        loop
-            -- change/add your code inside this loop     
+        loop -- TODO: Remove drift  
               	Start_Wait := Clock;					
 		f1;
                 f2;
+
 		delay until Start_Wait + 0.5;
+
 		Watchdog.start;
+
 		-- Ensures that f3 is executed every other second
-		if (c mod 2 = 0) then	
+		if (counter mod 2 = 0) then	
                 	f3;	  
 		end if;
 
 		Watchdog.stop(Start_wait);
 		
-		c := c+1;      
+		counter := counter + 1;      
         end loop;
 end cyclic_wd;

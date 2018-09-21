@@ -11,33 +11,30 @@ use Ada.Text_IO;
 procedure comm1 is
     Message: constant String := "Process communication";
 	task buffer is
-            -- add your task entries for communication 
-		entry get(x: out Integer);
-		entry set(x: in Integer; y: out Integer);
-		entry quit;
+		entry get(value: out Integer); -- TODO: Add comment
+		entry set(value: in Integer; items_in_array: out Integer); --  TODO: Add comment
+		entry quit; --  TODO: Add comment
 	end buffer;
 
 	task producer is
-            -- add your task entries for communication 
-		entry update(x: in Integer);
-		entry quit;
+		entry update(items_in_array: in Integer); --  TODO: Add comment
+		entry quit; --  TODO: Add comment
 	end producer;
 
 	task consumer is
-            -- add your task entries for communication 
+            
 	end consumer;
 
 
 	task body buffer is 
 		Message: constant String := "buffer executing";
-                -- change/add your local declarations here 
-		b_array: array(1 .. 10) of Integer;
+		buffer_array: array(1 .. 10) of Integer;
 		index: Integer := 0; 
 		exit_flag: Boolean := False;
 		    
 	begin
 		Put_Line(Message);
-		loop  -- add your task code inside this loop
+		loop
 			-- Exit the task when the exit_flag is True			
 			if (exit_flag) then
 				exit;
@@ -46,19 +43,19 @@ procedure comm1 is
 			select
 				-- Set the the x value at the end of the buffer array 
 				when (index < 10) =>
-					accept set(x: in Integer; y: out Integer) do
+					accept set(value: in Integer; items_in_array: out Integer) do
 						index := index + 1;
-						b_array(index) := x;
-						y := index;		
+						buffer_array(index) := value;
+						items_in_array := index;		
 					end set;
 			or
 				-- Retrieves the first value in the buffer array and removes it from the buffer
 				when (index > 0) =>
-					accept get(x: out Integer) do			
-						x := b_array(1);
+					accept get(value: out Integer) do			
+						value := buffer_array(1);
 						For_Loop:
-							for I in Integer range 1 .. 9 loop
-								b_array(I) := b_array(I + 1);
+							for i in Integer range 1 .. 9 loop
+								buffer_array(i) := buffer_array(i + 1);
 
 						end loop For_Loop;
 						index := index - 1;
@@ -75,18 +72,20 @@ procedure comm1 is
 
 	task body producer is 
 		Message: constant String := "producer executing";
-                -- change/add your local declarations here
+
 		-- Setting up the random generator between 0 - 25
 		subtype rand_range is Integer range 0 .. 25;
    		package rand_value is new Ada.Numerics.Discrete_Random (rand_range);
    		use rand_value;
 		G: Generator;
+
 		value: Integer;
 		exit_flag: Boolean := False;
 		counter: Integer := 0;
+
 	begin
 		Put_Line(Message);
-		loop -- add your task code inside this loop
+		loop 
 			--Exit the task when the exit_flag is True  
 			if (exit_flag) then
 				exit;
@@ -98,15 +97,16 @@ procedure comm1 is
 				end quit;
 			or
 				-- Update the counter that counts the number of taken slots in the buffer
-				accept update(x: in Integer) do
-					counter := x;
+				accept update(items_in_array: in Integer) do
+					counter := items_in_array;
 				end update;
 			or
 				delay 0.05;
 			end select;
+
 			if (counter < 10) then
 				value := Random(G);
-				put_line("Value sent to buffer from P: " & Integer'Image(value));
+				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
 				buffer.set(value, counter);
 				Reset(G);
 			end if;
@@ -117,32 +117,33 @@ procedure comm1 is
 
 	task body consumer is 
 		Message: constant String := "consumer executing";
-                -- change/add your local declarations here
-		-- Setting up the random generator between 0 - 1
+		
+		-- Setting up a random Integer generator between 0 - 1
 		subtype rand_range is Integer range 0 .. 1;
    		package rand_value is new Ada.Numerics.Discrete_Random (rand_range);
    		use rand_value;
 		G: Generator;
-		value: Integer := 0;
-		x: Integer;
+
+		total: Integer := 0;
+		value: Integer;
 	begin
 		Put_Line(Message);
 		Main_Cycle:
-		loop     -- add your task code inside this loop 
-			buffer.get(x);
-			put_line("Value recived from buffer to C: " & Integer'Image(x));			
-			value := value + x;
+		loop   
+			buffer.get(value);
+			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));			
+			total := total + value;
 			
-			delay Duration(Random(G));
+			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
+			delay Duration(float(Random(G)) - 0.5);
 			Reset(G); 			
 
-			if (value >= 100) then
+			if (total >= 100) then
 				exit;
 			end if;
 		end loop Main_Cycle; 
 
-                -- add your code to stop executions of other tasks
-		producer.quit;  
+                producer.quit;  
 		buffer.quit; 
 		exception
 			  when TASKING_ERROR =>

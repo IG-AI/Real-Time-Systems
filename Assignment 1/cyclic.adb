@@ -5,11 +5,10 @@ use Ada.Text_IO;
 
 procedure cyclic is
     Message: constant String := "Cyclic scheduler";
-        -- change/add your declarations here
-	Start_Wait: Time;
-	c: Integer := 0;  
 	Start_Time: Time := Clock;
-	s: Integer := 0;
+	Start_Wait: Time;
+	counter: Integer := 0;  
+	
         
 
 	procedure f1 is 
@@ -34,18 +33,17 @@ procedure cyclic is
 	end f3;
 
 	begin
-        loop
-            -- change/add your code inside this loop                 		
+        loop  -- TODO: Remove Drift            		
 		Start_Wait := Clock;					
 		f1;
                 f2;
 
 		-- Ensures that f3 is executed every other second
-		if (c mod 2 = 0) then  
+		if (counter mod 2 = 0) then  
 			delay until Start_Wait + 0.5;
                 	f3;
 		end if;
-		c := c+1;
+		counter := counter + 1;
 		
 		delay until Start_Wait + 1.0;
         end loop;

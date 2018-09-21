@@ -3,7 +3,7 @@ with Ada.Text_IO;
 use Ada.Calendar;
 use Ada.Text_IO;
 
-procedure cyclic is
+procedure cyclic_try is
     Message: constant String := "Cyclic scheduler";
         -- change/add your declarations here
 	Start_Wait: Time;
@@ -13,7 +13,6 @@ procedure cyclic is
 	Release: Time;
 	Drift: Duration;
 	Next: Time;
-	
         
 
 	procedure f1 is 
@@ -47,17 +46,22 @@ procedure cyclic is
 		f1;
                 f2;
 		Drift := Release - Next;
+
 		-- Ensures that f3 is executed every other second
 		if (c mod 2 = 0) then
 			Next := Next - Drift + 0.5;	  
 			delay until Next;
+			
+			--delay 0.5;
+			
 			Release := Clock;
                 	f3;
 			Drift := Release - Next;
 			Next := Next - Drift; 	
 		end if;
 		c := c + 1;
-		Next := Next + 1.0; 
+
+		Next := Next - Drift + 1.0; 
         end loop;
-end cyclic;
+end cyclic_try;
 
