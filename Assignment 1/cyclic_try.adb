@@ -48,7 +48,7 @@ procedure cyclic_try is
 		Drift := Release - Next;
 
 		-- Ensures that f3 is executed every other second
-		if (c mod 2 = 0) then
+		if (c mod 2 = 1) then
 			Next := Next - Drift + 0.5;	  
 			delay until Next;
 			
@@ -59,7 +59,7 @@ procedure cyclic_try is
 			Drift := Release - Next;
 			Next := Next - Drift; 	
 		end if;
-		c := c + 1;
+		--c := c + 1;
 
 		Next := Next - Drift + 1.0; 
         end loop;

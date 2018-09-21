@@ -1,3 +1,5 @@
+--Cyclic scheduler:  Ada lab part 1
+
 with Ada.Calendar;
 with Ada.Text_IO;
 use Ada.Calendar;
@@ -6,7 +8,7 @@ use Ada.Text_IO;
 procedure cyclic is
     Message: constant String := "Cyclic scheduler";
 	Start_Time: Time := Clock;
-	Start_Wait: Time;
+	Start_Wait: Time := Clock;
 	counter: Integer := 0;  
 	
         
@@ -34,7 +36,7 @@ procedure cyclic is
 
 	begin
         loop  -- TODO: Remove Drift            		
-		Start_Wait := Clock;					
+		Start_wait := Start_wait + 1.0;				
 		f1;
                 f2;
 

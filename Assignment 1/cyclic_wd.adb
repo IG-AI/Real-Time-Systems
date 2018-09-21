@@ -1,4 +1,4 @@
---Cyclic scheduler with a watchdog: 
+--Cyclic scheduler with a watchdog:  Ada lab part 2
 
 with Ada.Calendar;
 with Ada.Text_IO;
@@ -8,13 +8,11 @@ use Ada.Calendar;
 use Ada.Text_IO;
 use Ada.Numerics.Float_Random;
 
--- add packages to use randam number generator
-
 
 procedure cyclic_wd is
     Message: constant String := "Cyclic scheduler with watchdog";
 	Start_Time: Time := Clock;
-	Start_Wait: Time;
+	Start_Wait: Time := Clock;	
 	counter: Integer := 0;  	
         G: Generator;
 	
@@ -81,9 +79,8 @@ procedure cyclic_wd is
 	end Watchdog;
 
 	begin
-
         loop -- TODO: Remove drift  
-              	Start_Wait := Clock;					
+              	Start_Wait := Start_wait + 1.0;					
 		f1;
                 f2;
 
