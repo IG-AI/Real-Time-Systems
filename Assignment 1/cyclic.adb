@@ -35,8 +35,8 @@ procedure cyclic is
 	end f3;
 
 	begin
-        loop  -- TODO: Remove Drift            		
-		Start_wait := Start_wait + 1.0;				
+        loop           		
+		Start_Wait := Start_Wait + 1.0;				
 		f1;
                 f2;
 

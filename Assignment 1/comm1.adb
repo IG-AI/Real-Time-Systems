@@ -11,14 +11,14 @@ use Ada.Text_IO;
 procedure comm1 is
     Message: constant String := "Process communication";
 	task buffer is
-		entry get(value: out Integer); -- TODO: Add comment
-		entry set(value: in Integer; items_in_array: out Integer); --  TODO: Add comment
-		entry quit; --  TODO: Add comment
+		entry get(value: out Integer); -- Used to retrive an item from the buffer
+		entry set(value: in Integer; items_in_buffer: out Integer); -- Used to insert an item into the buffer
+		entry quit; -- Used to end the buffer  
 	end buffer;
 
 	task producer is
-		entry update(items_in_array: in Integer); --  TODO: Add comment
-		entry quit; --  TODO: Add comment
+		entry update(items_in_buffer: in Integer); -- Used to update how many items are in the buffer
+		entry quit; -- Used to end the producer  
 	end producer;
 
 	task consumer is
@@ -41,15 +41,15 @@ procedure comm1 is
 			end if;	   		
 
 			select
-				-- Set the the x value at the end of the buffer array 
+				-- Receives a random number and adds it at the end of the buffer 
 				when (index < 10) =>
-					accept set(value: in Integer; items_in_array: out Integer) do
+					accept set(value: in Integer; items_in_buffer: out Integer) do
 						index := index + 1;
 						buffer_array(index) := value;
-						items_in_array := index;		
+						items_in_buffer := index;		
 					end set;
 			or
-				-- Retrieves the first value in the buffer array and removes it from the buffer
+				-- Retrieves the first value in the buffer 
 				when (index > 0) =>
 					accept get(value: out Integer) do			
 						value := buffer_array(1);
@@ -62,6 +62,7 @@ procedure comm1 is
 						producer.update(index);
 					end get;
 			or
+				-- Sets the exit flag to true so that the buffer will end the next iteration
 				accept quit do
 					exit_flag := True;
 				end quit;				
@@ -92,18 +93,20 @@ procedure comm1 is
 			end if;			
 
 			select 
+				-- Sets the exit flag to true so that the producer will end the next iteration
 				accept quit do
 					exit_flag := True;
 				end quit;
 			or
 				-- Update the counter that counts the number of taken slots in the buffer
-				accept update(items_in_array: in Integer) do
-					counter := items_in_array;
+				accept update(items_in_buffer: in Integer) do
+					counter := items_in_buffer;
 				end update;
 			or
 				delay 0.05;
 			end select;
 
+			-- If the buffer is not full a random number is generated and sent to the buffer
 			if (counter < 10) then
 				value := Random(G);
 				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
@@ -130,25 +133,29 @@ procedure comm1 is
 		Put_Line(Message);
 		Main_Cycle:
 		loop   
+			-- Retreive a number from the buffer and add it to the total
 			buffer.get(value);
 			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));			
 			total := total + value;
 			
+			if (total >= 100) then
+				exit;
+			end if;
+
 			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
 			delay Duration(float(Random(G)) - 0.5);
 			Reset(G); 			
 
-			if (total >= 100) then
-				exit;
-			end if;
 		end loop Main_Cycle; 
 
+		Put_Line("Ending the consumer");
+
+		-- End the other tasks
                 producer.quit;  
 		buffer.quit; 
 		exception
 			  when TASKING_ERROR =>
 				  Put_Line("Buffer finished before producer");
-		Put_Line("Ending the consumer");
 	end consumer;
 begin
 	Put_Line(Message);

@@ -12,8 +12,8 @@ procedure comm2 is
 	buffer_array: BufferArray;
 
 	protected  buffer is
-		entry read(value: out Integer); -- TODO: Add comment
-		entry write(value: in Integer); -- TODO: Add comment
+		entry read(value: out Integer); -- Used to retrive an item from the buffer
+		entry write(value: in Integer); -- Used to insert an item into the buffer
 
 	private
 		index: Integer := 0; 
@@ -21,7 +21,7 @@ procedure comm2 is
 	end buffer;
 
 	task producer is
-		entry quit; -- TODO: Add comment
+		entry quit; -- Used to end the buffer
 	end producer;
 
 	task consumer is
@@ -72,11 +72,13 @@ procedure comm2 is
 				exit;			
 			end if;
 
-			Select
+			Select		
+				-- Sets the exit flag to true so that the producer will end the next iteration		
 				accept quit do
 					exit_flag := True;
 				end quit;
 			or
+				-- If 'quit' is not received then a random number is generated and sent to the buffer
 				delay 0.05;
 				value := Random(G); 			 
 				buffer.write(value);
@@ -101,21 +103,24 @@ procedure comm2 is
 	begin
 		Put_Line(Message);
 		Main_Cycle:
-		loop 
-			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
-			delay Duration(float(Random(G)) - 0.5);
-			Reset(G); 	
-
+		loop 			
+			-- Retreive a number from the buffer and add it to the total
 			buffer.read(value); 
 			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));	
 			total := total + value; 
-	
+
 			if (total >= 100) then
 				exit;
 			end if;
+
+			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
+			delay Duration(float(Random(G)) - 0.5);
+			Reset(G); 
 		end loop Main_Cycle; 
    
 		Put_Line("Ending the consumer");
+
+		-- End the other tasks
 		producer.quit;
 		
 	end consumer;

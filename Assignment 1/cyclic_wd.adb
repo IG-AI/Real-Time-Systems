@@ -43,8 +43,8 @@ procedure cyclic_wd is
 	end f3;
 	
 	task Watchdog is
-		entry start; -- TODO: Add comment
-		entry stop(Start_wait: in Time); -- TODO: Add comment	 	   	
+		entry start; -- Used to synchronize Watchdog with the start of f3's execution
+		entry stop(Start_wait: in Time); -- Used to synchronize Watchdog with the end of f3's execution	 	   	
 	end Watchdog;
 
 	task body Watchdog is
@@ -57,9 +57,9 @@ procedure cyclic_wd is
 					start_flag := True; 
 				end start;
 			or	
-				-- Indicates that f3 finish executing in time 
+				-- Indicates that f3 finished executing in time 
 				when (start_flag) =>	
-					accept stop(Start_wait: in Time) do
+					accept stop(Start_Wait: in Time) do
 						start_flag := False;
 						delay until Start_Wait + 1.0;
 					end stop;
@@ -69,8 +69,8 @@ procedure cyclic_wd is
 					delay 0.5;
 					start_flag := False;
 					put_line("f3's execution time was too long!");
-					accept stop(Start_wait: in Time) do
-						delay until Start_wait + 2.0;
+					accept stop(Start_Wait: in Time) do
+						delay until Start_Wait + 2.0;
 					end stop;
 					
 			end select;
@@ -79,8 +79,8 @@ procedure cyclic_wd is
 	end Watchdog;
 
 	begin
-        loop -- TODO: Remove drift  
-              	Start_Wait := Start_wait + 1.0;					
+        loop 
+              	Start_Wait := Start_Wait + 1.0;					
 		f1;
                 f2;
 
@@ -93,7 +93,7 @@ procedure cyclic_wd is
                 	f3;	  
 		end if;
 
-		Watchdog.stop(Start_wait);
+		Watchdog.stop(Start_Wait);
 		
 		counter := counter + 1;      
         end loop;
