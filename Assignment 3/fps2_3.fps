@@ -1,0 +1,56 @@
+! -------------------------------------------------------
+! One system with three tasks, (t1, t2, t3). 
+! Each task has a Period (T), a Worst Case Computation Time (C) 
+! a deadline (D) and a Period (P).
+! The response time (R) is calculated for each task as well
+! as the utilization (U) for the whole system.
+! -------------------------------------------------------
+
+system Example {
+
+  declarations {	
+    tasks t1, t2, t3, t4;
+    indexed T,C,R,D,U;
+    priority P;
+  }
+
+  initialise {
+
+    ! Periods	
+    T[t1] = 20;
+    T[t2] = 7;
+    T[t3] = 14;
+    T[t4] = 100;
+    
+    ! WCETs
+    C[t1] = 2;
+    C[t2] = 3;
+    C[t3] = 5;
+    C[t4] = 4;
+
+    ! Deadlines
+    D[t1] = 6;
+    D[t2] = 7;
+    D[t3] = 13;
+    D[t4] = 60;
+
+    ! Priorities
+    P[t1] = 1;
+    P[t2] = 2;
+    P[t3] = 2;
+    P[t4] = 3;
+  }
+
+   formulas {  
+
+    ! Calculate the response-time for each task
+    !R[i] = C[i] + sigma(hp, ceiling((R[i])/T[j]) * C[j]);
+
+    R[i] = sigma(hp, ceiling((R[i])/T[j]) * C[j]) + sigma(ep, C[j]);
+
+
+    ! Calculate the utilization in the system	
+    ! U must be indexed since lside and rside must be the same.	
+    U[i] = sigma(all, C[j]/T[j]); 
+  }
+}
