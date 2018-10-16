@@ -80,7 +80,12 @@ procedure cyclic_wd is
 
 	begin
         loop 
-              	Start_Wait := Start_Wait + 1.0;					
+		if (flag = FALSE) then
+			Start_Wait := Start_Wait + 1.0;
+		end if;
+		if (flag = TRUE) then      		
+			flag := FALSE;
+		end if;				
 		f1;
                 f2;
 

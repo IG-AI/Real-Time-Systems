@@ -12,12 +12,11 @@ procedure comm1 is
     Message: constant String := "Process communication";
 	task buffer is
 		entry get(value: out Integer); -- Used to retrive an item from the buffer
-		entry set(value: in Integer; items_in_buffer: out Integer); -- Used to insert an item into the buffer
+		entry set(value: in Integer); -- Used to insert an item into the buffer
 		entry quit; -- Used to end the buffer  
 	end buffer;
 
 	task producer is
-		entry update(items_in_buffer: in Integer); -- Used to update how many items are in the buffer
 		entry quit; -- Used to end the producer  
 	end producer;
 
@@ -43,10 +42,9 @@ procedure comm1 is
 			select
 				-- Receives a random number and adds it at the end of the buffer 
 				when (index < 10) =>
-					accept set(value: in Integer; items_in_buffer: out Integer) do
+					accept set(value: in Integer) do
 						index := index + 1;
-						buffer_array(index) := value;
-						items_in_buffer := index;		
+						buffer_array(index) := value;		
 					end set;
 			or
 				-- Retrieves the first value in the buffer 
@@ -59,7 +57,6 @@ procedure comm1 is
 
 						end loop For_Loop;
 						index := index - 1;
-						producer.update(index);
 					end get;
 			or
 				-- Sets the exit flag to true so that the buffer will end the next iteration
@@ -98,21 +95,14 @@ procedure comm1 is
 					exit_flag := True;
 				end quit;
 			or
-				-- Update the counter that counts the number of taken slots in the buffer
-				accept update(items_in_buffer: in Integer) do
-					counter := items_in_buffer;
-				end update;
-			or
 				delay 0.05;
 			end select;
 
-			-- If the buffer is not full a random number is generated and sent to the buffer
-			if (counter < 10) then
-				value := Random(G);
-				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
-				buffer.set(value, counter);
-				Reset(G);
-			end if;
+			value := Random(G);
+			put_line("Producer sent the following value to buffer: " & Integer'Image(value));
+			buffer.set(value);
+			Reset(G);
+
 		 
 		end loop;
 	end producer;
@@ -143,8 +133,9 @@ procedure comm1 is
 			end if;
 
 			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
-			delay Duration(float(Random(G)) - 0.5);
-			Reset(G); 			
+			--delay Duration(float(Random(G)) - 0.5);
+			--Reset(G); 
+			delay 1.0;			
 
 		end loop Main_Cycle; 
 

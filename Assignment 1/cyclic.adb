@@ -10,7 +10,7 @@ procedure cyclic is
 	Start_Time: Time := Clock;
 	Start_Wait: Time := Clock;
 	counter: Integer := 0;  
-	
+	flag: Boolean := TRUE;
         
 
 	procedure f1 is 
@@ -35,8 +35,13 @@ procedure cyclic is
 	end f3;
 
 	begin
-        loop           		
-		Start_Wait := Start_Wait + 1.0;				
+        loop    
+		if (flag = FALSE) then
+			Start_Wait := Start_Wait + 1.0;
+		end if;
+		if (flag = TRUE) then      		
+			flag := FALSE;
+		end if;
 		f1;
                 f2;
 
