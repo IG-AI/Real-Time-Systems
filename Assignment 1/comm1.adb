@@ -79,31 +79,28 @@ procedure comm1 is
 
 		value: Integer;
 		exit_flag: Boolean := False;
-		counter: Integer := 0;
 
 	begin
 		Put_Line(Message);
-		loop 
-			--Exit the task when the exit_flag is True  
-			if (exit_flag) then
-				exit;
-			end if;			
-
+		loop 	
 			select 
 				-- Sets the exit flag to true so that the producer will end the next iteration
 				accept quit do
 					exit_flag := True;
 				end quit;
 			or
-				delay 0.05;
+				delay 0.1;
 			end select;
+
+			--Exit the task when the exit_flag is True  
+			if (exit_flag) then
+				exit;
+			end if;	
 
 			value := Random(G);
 			put_line("Producer sent the following value to buffer: " & Integer'Image(value));
 			buffer.set(value);
-			Reset(G);
-
-		 
+			Reset(G);		 
 		end loop;
 	end producer;
 
@@ -126,16 +123,15 @@ procedure comm1 is
 			-- Retreive a number from the buffer and add it to the total
 			buffer.get(value);
 			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));			
-			total := total + value;
-			
+			total := total + value;			
+
 			if (total >= 100) then
 				exit;
 			end if;
 
 			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
-			--delay Duration(float(Random(G)) - 0.5);
-			--Reset(G); 
-			delay 1.0;			
+			delay Duration(float(Random(G)) - 0.5);
+			Reset(G); 		
 
 		end loop Main_Cycle; 
 

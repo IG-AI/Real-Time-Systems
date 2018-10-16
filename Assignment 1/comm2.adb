@@ -10,12 +10,12 @@ procedure comm2 is
     Message: constant String := "Protected Object";
     	type BufferArray is array (1 .. 10) of Integer;
 	buffer_array: BufferArray;
-	quit_flag: Boolean := False;
+	--quit_flag: Boolean := True;
 
 	protected  buffer is
 		entry read(value: out Integer); -- Used to retrive an item from the buffer
 		entry write(value: in Integer); -- Used to insert an item into the buffer
-		entry quit; -- Used to end the buffer
+		--entry quit; -- Used to end the buffer
 
 	private
 		index: Integer := 0; 
@@ -33,16 +33,9 @@ procedure comm2 is
 		
 	protected body buffer is 
 
-		entry quit
-			when (quit_flag = False) is
-		begin
-			put_line()
-			quit_flag := True;
-		end quit; 
-
 		-- Retrieves the first value in the buffer array and removes it from the buffer
 		entry read(value: out Integer)
-			when (index > 0 and quit_flag = False) is
+			when (index > 0) is
 		begin				
 			value := buffer_array(1);
 			For_Loop:
@@ -54,8 +47,8 @@ procedure comm2 is
 
 		-- Set the the received value at the end of the buffer array
 		entry write(value: in Integer)
-			when (index < 10 and quit_flag = False) is
-		begin			
+			when (index < 10) is
+		begin	
 			index := index + 1;
 			buffer_array(index) := value;
 		end write;
@@ -89,7 +82,7 @@ procedure comm2 is
 				end quit;
 			or
 				-- If 'quit' is not received then a random number is generated and sent to the buffer
-				delay 0.05;
+				delay 0.1;
 				value := Random(G); 			 
 				buffer.write(value);
 				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
@@ -114,13 +107,13 @@ procedure comm2 is
 		Put_Line(Message);
 		Main_Cycle:
 		loop 		
-			delay 0.5;	
+			--delay 0.5;	
 			-- Retreive a number from the buffer and add it to the total
 			buffer.read(value); 
 			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));	
 			total := total + value; 
 
-			delay 0.5;
+			--delay 0.5;
 
 			if (total >= 100) then
 				exit;
@@ -130,13 +123,14 @@ procedure comm2 is
 			--delay Duration(float(Random(G)) - 0.5);
 			--Reset(G); 
 
-			delay 0.5;
+			delay 1.0;
 		end loop Main_Cycle; 
    
 		Put_Line("Ending the consumer");
 
 		-- End the other tasks
 		
+		--buffer.quit;
 		producer.quit;
 		
 	end consumer;

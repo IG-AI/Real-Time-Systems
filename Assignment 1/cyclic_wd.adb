@@ -15,6 +15,7 @@ procedure cyclic_wd is
 	Start_Wait: Time := Clock;	
 	counter: Integer := 0;  	
         G: Generator;
+	flag: Boolean := TRUE;
 	
 	
 	procedure f1 is 
@@ -79,13 +80,14 @@ procedure cyclic_wd is
 	end Watchdog;
 
 	begin
-        loop 
+        loop
 		if (flag = FALSE) then
 			Start_Wait := Start_Wait + 1.0;
 		end if;
 		if (flag = TRUE) then      		
 			flag := FALSE;
-		end if;				
+		end if;	
+			
 		f1;
                 f2;
 
