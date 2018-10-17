@@ -37,14 +37,15 @@ procedure comm1 is
 			-- Exit the task when the exit_flag is True			
 			if (exit_flag) then
 				exit;
-			end if;	   		
+			end if;	  		
 
 			select
-				-- Receives a random number and adds it at the end of the buffer 
-				when (index < 10) =>
-					accept set(value: in Integer) do
+				-- Receives a random number and adds it at the end of the buffer 	
+				when (index < 10) =>	
+					accept set(value: in Integer) do				
 						index := index + 1;
-						buffer_array(index) := value;		
+						buffer_array(index) := value;	
+						
 					end set;
 			or
 				-- Retrieves the first value in the buffer 
@@ -78,13 +79,14 @@ procedure comm1 is
 		G: Generator;
 
 		value: Integer;
+		old_value: Integer := -1;
 		exit_flag: Boolean := False;
 
 	begin
 		Put_Line(Message);
 		loop 	
 			select 
-				-- Sets the exit flag to true so that the producer will end the next iteration
+				-- Sets the exit flag to true so that the producer will end 
 				accept quit do
 					exit_flag := True;
 				end quit;
@@ -97,10 +99,25 @@ procedure comm1 is
 				exit;
 			end if;	
 
-			value := Random(G);
-			put_line("Producer sent the following value to buffer: " & Integer'Image(value));
-			buffer.set(value);
-			Reset(G);		 
+			-- Use unsent value if one exists, else generate new
+			if (old_value = -1) then
+				value := Random(G); 
+			else
+				value := old_value;
+			end if;
+			 	
+			-- Try setting a value. If to much time passes the attempt is aborted and the value is saved
+			-- to be sent again. 
+			select					 
+				buffer.set(value);
+				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
+				old_value := -1;				
+			or 
+				delay 1.0;
+				old_value := value;
+			end select;
+	   		Reset(G);	
+ 
 		end loop;
 	end producer;
 
@@ -131,7 +148,7 @@ procedure comm1 is
 
 			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
 			delay Duration(float(Random(G)) - 0.5);
-			Reset(G); 		
+			Reset(G);	
 
 		end loop Main_Cycle; 
 

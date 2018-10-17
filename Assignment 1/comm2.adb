@@ -66,15 +66,11 @@ procedure comm2 is
 		G: Generator;
 
 		value: Integer;
+		old_value: Integer := -1;
 		exit_flag: Boolean := False;  
 	begin
 		Put_Line(Message);
 		loop
-			-- Exit the task when the exit_flag is True
-			if (exit_flag) then
-				exit;			
-			end if;
-
 			Select		
 				-- Sets the exit flag to true so that the producer will end the next iteration		
 				accept quit do
@@ -83,11 +79,33 @@ procedure comm2 is
 			or
 				-- If 'quit' is not received then a random number is generated and sent to the buffer
 				delay 0.1;
-				value := Random(G); 			 
+				
+			end select;
+
+			-- Exit the task when the exit_flag is True
+			if (exit_flag) then
+				exit;			
+			end if;
+
+			-- Use unsent value if one exists, else generate new
+			if (old_value = -1) then
+				value := Random(G); 
+			else
+				value := old_value;
+			end if;
+			 	
+			-- Try setting a value. If too much time passes the attempt is aborted and the value is saved
+			-- to be sent again.
+			select					 
 				buffer.write(value);
 				put_line("Producer sent the following value to buffer: " & Integer'Image(value));
-	   			Reset(G);
-			end select;
+				old_value := -1;				
+			or 
+				delay 1.0;
+				old_value := value;
+			end select;			
+	   		Reset(G);
+
 		end loop;
 	end producer;
 
@@ -107,30 +125,23 @@ procedure comm2 is
 		Put_Line(Message);
 		Main_Cycle:
 		loop 		
-			--delay 0.5;	
 			-- Retreive a number from the buffer and add it to the total
 			buffer.read(value); 
 			put_line("Consumer recived the following value from buffer: " & Integer'Image(value));	
 			total := total + value; 
-
-			--delay 0.5;
-
+             		
 			if (total >= 100) then
 				exit;
 			end if;
 
 			-- Delay either 0.0 or 0.5 seconds so that the producer have time to fill up the buffer 
-			--delay Duration(float(Random(G)) - 0.5);
-			--Reset(G); 
-
-			delay 1.0;
+			delay Duration(float(Random(G)) - 0.5);
+			Reset(G); 
 		end loop Main_Cycle; 
    
 		Put_Line("Ending the consumer");
 
 		-- End the other tasks
-		
-		--buffer.quit;
 		producer.quit;
 		
 	end consumer;
